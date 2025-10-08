@@ -1,29 +1,49 @@
+// js/app.js
+// ========= IMPORTS (unificados, sin duplicados) =========
 import './components/navbar.js';
 import './components/footer.js';
 import './components/roomCard.js';
 import './components/searchBar.js';
 import './components/loginRegister.js';
 import './components/reservationModal.js';
-import { listRooms } from './services/roomService.js';
-import { searchAvailable, listMyBookings, cancelBooking, listAllBookings } from './services/reservationService.js';
+
 import { currentUser } from './services/authService.js';
+
+import {
+  // Rooms
+  listRooms,
+  createRoom,
+  updateRoom,
+  deleteRoom,
+} from './services/roomService.js';
+
+import {
+  // Reservations
+  searchAvailable,
+  listMyBookings,
+  listAllBookings,
+  cancelBooking,
+} from './services/reservationService.js';
+
 import { toast, confirmModal } from './utils/ui.js';
 
-// Expose bootstrap globally if needed (already available via bundle placeholder)
+// Expose bootstrap if needed
 window.bootstrap = window.bootstrap || {};
 
-// -------- index.html --------
+// ===================== INDEX (home) =====================
 const homeRooms = document.querySelector('#homeRooms');
-if(homeRooms){
+if (homeRooms) {
   const rooms = listRooms();
-  const subset = rooms.slice(0,3);
-  subset.forEach(r=>{
-    const el = document.createElement('room-card'); el.data = r; homeRooms.appendChild(el);
+  const subset = rooms.slice(0, 3);
+  subset.forEach((r) => {
+    const el = document.createElement('room-card');
+    el.data = r;
+    homeRooms.appendChild(el);
   });
-  homeRooms.addEventListener('reserve', ()=> location.href='reservas.html');
+  homeRooms.addEventListener('reserve', () => (location.href = 'reservas.html'));
 }
 
-// -------- reservas.html --------
+// ==================== RESERVAS PAGE =====================
 const resultsWrap = document.querySelector('#results');
 const resultsCount = document.querySelector('#resultsCount');
 const searchBar = document.querySelector('search-bar');
@@ -32,80 +52,89 @@ const myBookingsWrap = document.querySelector('#myBookings');
 const refreshBtn = document.querySelector('#refreshBookings');
 
 let lastQuery = null;
-function renderResults(list){
+
+function renderResults(list) {
+  if (!resultsWrap || !resultsCount) return;
   resultsWrap.innerHTML = '';
-  list.forEach(r=>{
-    const el = document.createElement('room-card'); el.data = r; resultsWrap.appendChild(el);
+  list.forEach((r) => {
+    const el = document.createElement('room-card');
+    el.data = r;
+    resultsWrap.appendChild(el);
   });
   resultsCount.textContent = `${list.length} opción(es)`;
 }
 
-function renderMyBookings(){
+function renderMyBookings() {
+  if (!myBookingsWrap) return;
   const s = currentUser();
-  if(!s){ myBookingsWrap.innerHTML = '<div class="text-muted small">Inicia sesión para ver tus reservas.</div>'; return; }
+  if (!s) {
+    myBookingsWrap.innerHTML = '<div class="text-muted small">Inicia sesión para ver tus reservas.</div>';
+    return;
+  }
   const items = listMyBookings(s.id);
-  if(items.length===0){ myBookingsWrap.innerHTML = '<div class="text-muted small">Aún no tienes reservas.</div>'; return; }
-  myBookingsWrap.innerHTML = items.map(b=>`
+  if (items.length === 0) {
+    myBookingsWrap.innerHTML = '<div class="text-muted small">Aún no tienes reservas.</div>';
+    return;
+  }
+  myBookingsWrap.innerHTML = items
+    .map(
+      (b) => `
     <div class="col-12 col-md-6">
       <div class="card shadow-sm border-0">
         <div class="card-body d-flex flex-column">
           <div class="d-flex justify-content-between align-items-center">
-            <strong>${b.room?.name||'Habitación'}</strong>
+            <strong>${b.room?.name || 'Habitación'}</strong>
             <span class="badge text-bg-light"><i class="bi bi-calendar2-week me-1"></i>${b.from} → ${b.to}</span>
           </div>
-          <div class="small text-muted mt-2">${b.guests} huésped(es) · Total $${(b.total||0).toLocaleString('es-CO')} COP</div>
+          <div class="small text-muted mt-2">${b.guests} huésped(es) · Total $${(b.total || 0).toLocaleString('es-CO')} COP</div>
           <div class="mt-3 d-flex gap-2">
             <button class="btn btn-outline-danger btn-sm" data-cancel="${b.id}"><i class="bi bi-x-circle"></i> Cancelar</button>
           </div>
         </div>
       </div>
-    </div>`).join('');
-  myBookingsWrap.querySelectorAll('[data-cancel]').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
+    </div>`
+    )
+    .join('');
+  myBookingsWrap.querySelectorAll('[data-cancel]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
       const ok = await confirmModal('Cancelar reserva', '¿Seguro deseas cancelar esta reserva?');
-      if(!ok) return;
+      if (!ok) return;
       cancelBooking(btn.dataset.cancel);
-      toast('Reserva cancelada','warning');
+      toast('Reserva cancelada', 'warning');
       renderMyBookings();
-      if(lastQuery) renderResults(searchAvailable(lastQuery));
+      if (lastQuery) renderResults(searchAvailable(lastQuery));
     });
   });
 }
 
-if(searchBar){
-  searchBar.addEventListener('results', (e)=>{
+if (searchBar) {
+  searchBar.addEventListener('results', (e) => {
     lastQuery = e.detail.q;
     renderResults(e.detail.results);
   });
-  // run initial query (today/tomorrow, 2 guests)
+  // consulta inicial (hoy/mañana, 2 huéspedes)
   const fd = new FormData(searchBar.querySelector('form'));
   lastQuery = { from: fd.get('from'), to: fd.get('to'), guests: +fd.get('guests') };
   renderResults(searchAvailable(lastQuery));
-  resultsWrap.addEventListener('reserve', (e)=>{
-    const s = currentUser();
-    if(!s){ document.querySelector('[data-bs-target="#loginModal"]').click(); return; }
-    resModal.open({ roomId: e.detail.roomId, ...lastQuery });
-  });
-  resModal.addEventListener('booked', ()=>{
+
+  if (resultsWrap) {
+    resultsWrap.addEventListener('reserve', (e) => {
+      const s = currentUser();
+      if (!s) {
+        document.querySelector('[data-bs-target="#loginModal"]')?.click();
+        return;
+      }
+      resModal?.open({ roomId: e.detail.roomId, ...lastQuery });
+    });
+  }
+  resModal?.addEventListener('booked', () => {
     renderMyBookings();
   });
-  if(refreshBtn) refreshBtn.addEventListener('click', renderMyBookings);
+  refreshBtn?.addEventListener('click', renderMyBookings);
   renderMyBookings();
 }
 
-// -------- contacto.html --------
-const contactForm = document.querySelector('#contactForm');
-if(contactForm){
-  const msg = document.querySelector('#contactMsg');
-  contactForm.addEventListener('submit', (e)=>{
-    e.preventDefault(); msg.classList.remove('d-none'); e.target.reset();
-  });
-}
-
-// -------- admin.html --------
-import { createRoom, updateRoom, deleteRoom, listRooms } from './services/roomService.js';
-import { listAllBookings, cancelBooking } from './services/reservationService.js';
-
+// ====================== ADMIN PAGE ======================
 const adminGuard = document.querySelector('#adminGuard');
 const adminContent = document.querySelector('#adminContent');
 const btnNewRoom = document.querySelector('#btnNewRoom');
@@ -113,17 +142,25 @@ const roomsAdmin = document.querySelector('#roomsAdmin');
 const bookingsAdmin = document.querySelector('#bookingsAdmin');
 const refreshAllBookings = document.querySelector('#refreshAllBookings');
 
-function requireAdmin(){
+function requireAdmin() {
+  if (!adminGuard || !adminContent) return false;
   const s = currentUser();
-  if(!s || s.role!=='admin'){ adminGuard?.classList.remove('d-none'); adminContent?.classList.add('d-none'); return false; }
-  adminGuard?.classList.add('d-none'); adminContent?.classList.remove('d-none'); return true;
+  if (!s || s.role !== 'admin') {
+    adminGuard.classList.remove('d-none');
+    adminContent.classList.add('d-none');
+    return false;
+  }
+  adminGuard.classList.add('d-none');
+  adminContent.classList.remove('d-none');
+  return true;
 }
 
-function renderRoomsAdmin(){
+function renderRoomsAdmin() {
+  if (!roomsAdmin) return;
   roomsAdmin.innerHTML = '';
-  listRooms().forEach(r=>{
+  listRooms().forEach((r) => {
     const card = document.createElement('div');
-    card.className='col-12 col-md-6 col-lg-4';
+    card.className = 'col-12 col-md-6 col-lg-4';
     card.innerHTML = `
       <div class="card h-100 shadow-sm">
         <img src="${r.img}" class="card-img-top" alt="${r.name}">
@@ -140,24 +177,28 @@ function renderRoomsAdmin(){
       </div>`;
     roomsAdmin.appendChild(card);
   });
-  roomsAdmin.querySelectorAll('[data-del]').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const ok = await confirmModal('Eliminar habitación','¿Seguro deseas eliminarla?'); if(!ok) return;
-      deleteRoom(btn.dataset.del); toast('Habitación eliminada','warning'); renderRoomsAdmin();
+  roomsAdmin.querySelectorAll('[data-del]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const ok = await confirmModal('Eliminar habitación', '¿Seguro deseas eliminarla?');
+      if (!ok) return;
+      deleteRoom(btn.dataset.del);
+      toast('Habitación eliminada', 'warning');
+      renderRoomsAdmin();
     });
   });
-  roomsAdmin.querySelectorAll('[data-edit]').forEach(btn=>{
-    btn.addEventListener('click', ()=> openRoomForm(listRooms().find(x=>x.id===btn.dataset.edit)));
+  roomsAdmin.querySelectorAll('[data-edit]').forEach((btn) => {
+    btn.addEventListener('click', () => openRoomForm(listRooms().find((x) => x.id === btn.dataset.edit)));
   });
 }
-function openRoomForm(room){
+
+function openRoomForm(room) {
   const wrapper = document.createElement('div');
   const isNew = !room;
-  room = room || { name:'', beds:1, maxGuests:2, price:100000, services:['wifi'], img:'https://picsum.photos/seed/new/800/600' };
+  room = room || { name: '', beds: 1, maxGuests: 2, price: 100000, services: ['wifi'], img: 'https://picsum.photos/seed/new/800/600' };
   wrapper.innerHTML = `
     <div class="modal fade" id="roomForm" tabindex="-1">
       <div class="modal-dialog"><div class="modal-content">
-        <div class="modal-header"><h5 class="modal-title">${isNew?'Nueva':'Editar'} habitación</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-header"><h5 class="modal-title">${isNew ? 'Nueva' : 'Editar'} habitación</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
         <div class="modal-body">
           <form class="row g-2">
             <div class="col-12"><label class="form-label">Nombre</label><input class="form-control" name="name" value="${room.name}"></div>
@@ -175,33 +216,41 @@ function openRoomForm(room){
       </div></div>
     </div>`;
   document.body.appendChild(wrapper);
-  const modal = new bootstrap.Modal(wrapper.querySelector('.modal')); modal.show();
-  wrapper.querySelector('#saveRoom').addEventListener('click', ()=>{
+  const modal = new bootstrap.Modal(wrapper.querySelector('.modal'));
+  modal.show();
+  wrapper.querySelector('#saveRoom').addEventListener('click', () => {
     const fd = new FormData(wrapper.querySelector('form'));
     const data = {
       name: fd.get('name'),
       beds: +fd.get('beds'),
       maxGuests: +fd.get('maxGuests'),
       price: +fd.get('price'),
-      services: fd.get('services').split(',').map(s=>s.trim()).filter(Boolean),
-      img: fd.get('img')
+      services: fd.get('services').split(',').map((s) => s.trim()).filter(Boolean),
+      img: fd.get('img'),
     };
-    if(isNew){ createRoom(data); } else { updateRoom(room.id, data); }
-    toast('Guardado','success'); modal.hide(); renderRoomsAdmin();
+    if (isNew) {
+      createRoom(data);
+    } else {
+      updateRoom(room.id, data);
+    }
+    toast('Guardado', 'success');
+    modal.hide();
+    renderRoomsAdmin();
   });
-  wrapper.querySelector('.modal').addEventListener('hidden.bs.modal', ()=> wrapper.remove());
+  wrapper.querySelector('.modal').addEventListener('hidden.bs.modal', () => wrapper.remove());
 }
 
-function renderBookingsAdmin(){
+function renderBookingsAdmin() {
+  if (!bookingsAdmin) return;
   bookingsAdmin.innerHTML = '';
-  listAllBookings().forEach(b=>{
+  listAllBookings().forEach((b) => {
     const el = document.createElement('div');
     el.className = 'col-12';
     el.innerHTML = `
       <div class="card shadow-sm border-0">
         <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
           <div>
-            <strong>${b.room?.name||'Habitación'}</strong> · <span class="text-muted">${b.user?.name||'Usuario'}</span>
+            <strong>${b.room?.name || 'Habitación'}</strong> · <span class="text-muted">${b.user?.name || 'Usuario'}</span>
             <div class="small text-muted">${b.from} → ${b.to} · ${b.guests} huésped(es)</div>
           </div>
           <div class="d-flex gap-2">
@@ -211,17 +260,20 @@ function renderBookingsAdmin(){
       </div>`;
     bookingsAdmin.appendChild(el);
   });
-  bookingsAdmin.querySelectorAll('[data-cancel]').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
-      const ok = await confirmModal('Cancelar reserva','¿Confirmas la cancelación?'); if(!ok) return;
-      cancelBooking(btn.dataset.cancel); toast('Reserva cancelada','warning'); renderBookingsAdmin();
+  bookingsAdmin.querySelectorAll('[data-cancel]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const ok = await confirmModal('Cancelar reserva', '¿Confirmas la cancelación?');
+      if (!ok) return;
+      cancelBooking(btn.dataset.cancel);
+      toast('Reserva cancelada', 'warning');
+      renderBookingsAdmin();
     });
   });
 }
 
-if(requireAdmin()){
+if (requireAdmin()) {
   renderRoomsAdmin();
   renderBookingsAdmin();
-  btnNewRoom?.addEventListener('click', ()=> openRoomForm(null));
+  btnNewRoom?.addEventListener('click', () => openRoomForm(null));
   refreshAllBookings?.addEventListener('click', renderBookingsAdmin);
 }
