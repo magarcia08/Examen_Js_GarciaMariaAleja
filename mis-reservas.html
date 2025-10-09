@@ -1,0 +1,47 @@
+
+<!DOCTYPE html><html lang="es"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mis Reservas — Hotel el Rincón del Carmen</title>
+<link rel="stylesheet" href="css/bootstrap/bootstrap.css"><link rel="stylesheet" href="css/styles.css">
+</head><body>
+<site-navbar></site-navbar>
+<main class="container my-5">
+  <h1 class="section-title mb-3">Mis reservas</h1>
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead><tr><th>Habitación</th><th>Desde</th><th>Hasta</th><th>Personas</th><th>Total</th></tr></thead>
+      <tbody id="tblMyRes"></tbody>
+    </table>
+  </div>
+</main>
+<site-footer></site-footer>
+<script src="js/bootstrap/bootstrap.bundle.js"></script>
+<script type="module">
+  import './app.js'; import './js/components/navbar.js'; import './js/components/footer.js';
+  import { currentUser } from './js/services/authService.js';
+  import { listByUser } from './js/services/reservationService.js';
+  import { db } from './js/storage/storage.js';
+  import { toast } from './js/utils/ui.js';
+
+  const me=currentUser();
+  if(!me){ toast('Debes iniciar sesión','warning'); location.href='auth.html'; }
+
+  const st=db.read();
+  const myRes=listByUser(me.id);
+  const body=document.getElementById('tblMyRes');
+  if(myRes.length===0){
+    body.innerHTML='<tr><td colspan="5">No tienes reservas registradas.</td></tr>';
+  }else{
+    body.innerHTML=myRes.map(x=>{
+      const room=st.rooms.find(r=>r.id===x.roomId);
+      return `<tr>
+        <td>${room?.name||'?'}</td>
+        <td>${x.from}</td>
+        <td>${x.to}</td>
+        <td>${x.guests}</td>
+        <td>$${x.total.toLocaleString('es-CO')}</td>
+      </tr>`;
+    }).join('');
+  }
+</script>
+</body></html>

@@ -1,16 +1,12 @@
-export function toISO(date){
-  const d = new Date(date);
-  d.setHours(0,0,0,0);
-  return d.toISOString().slice(0,10);
+
+export function overlaps(aFrom, aTo, bFrom, bTo){
+  const A = new Date(aFrom).getTime();
+  const B = new Date(aTo).getTime();
+  const C = new Date(bFrom).getTime();
+  const D = new Date(bTo).getTime();
+  return A < D && C < B;
 }
 export function nights(from,to){
-  const a = new Date(toISO(from));
-  const b = new Date(toISO(to));
-  return Math.max(0, Math.ceil((b-a)/(1000*60*60*24)));
-}
-export function overlaps(aStart,aEnd,bStart,bEnd){
-  // [start, end) convention
-  const A1 = new Date(aStart), A2 = new Date(aEnd);
-  const B1 = new Date(bStart), B2 = new Date(bEnd);
-  return A1 < B2 && B1 < A2;
+  const ms = new Date(to) - new Date(from);
+  return ms > 0 ? Math.ceil(ms / (1000*60*60*24)) : 0;
 }

@@ -1,0 +1,33 @@
+
+<!DOCTYPE html><html lang="es"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Detalles — Hotel el Rincón del Carmen</title>
+<link rel="stylesheet" href="css/bootstrap/bootstrap.css"><link rel="stylesheet" href="css/styles.css">
+</head><body>
+<site-navbar></site-navbar>
+<main class="container my-5" id="content"></main>
+<site-footer></site-footer>
+<script src="js/bootstrap/bootstrap.bundle.js"></script>
+<script type="module">
+  import './app.js'; import './js/components/navbar.js'; import './js/components/footer.js';
+  import { getRoomBySlug } from './js/services/roomService.js';
+  const slug=new URLSearchParams(location.search).get('slug');
+  const r=getRoomBySlug(slug);
+  const c=document.getElementById('content');
+  if(!r){ c.innerHTML='<p>No encontrada.</p>'; }
+  else{
+    const photo=(r.photos&&r.photos[0])||'https://picsum.photos/seed/fallback/1200/800';
+    c.innerHTML=`
+      <div class="row g-4">
+        <div class="col-12 col-lg-6"><img class="img-fluid rounded-4 shadow" src="${photo}" alt="${r.name}"></div>
+        <div class="col-12 col-lg-6">
+          <h1 class="section-title mb-2">${r.name}</h1>
+          <p class="text-secondary">${r.desc}</p>
+          <p><strong>Capacidad:</strong> ${r.maxGuests} · <strong>Camas:</strong> ${r.beds}</p>
+          <p class="h4 mb-4">$${r.price.toLocaleString('es-CO')} / noche</p>
+          <a class="btn btn-primary" href="booking.html">Reservar</a>
+        </div>
+      </div>`;
+  }
+</script>
+</body></html>

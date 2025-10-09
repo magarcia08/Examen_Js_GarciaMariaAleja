@@ -1,40 +1,28 @@
-// js/components/footer.js
-class AppFooter extends HTMLElement{
+
+class SiteFooter extends HTMLElement{
   connectedCallback(){
-    const y = new Date().getFullYear();
-    this.innerHTML = /*html*/`
+    this.innerHTML = `
       <footer class="luxe mt-5 py-5">
         <div class="container">
           <div class="row g-4">
-            <div class="col-12 col-lg-4">
-              <div class="brand h5 mb-2">Hotel El Rincón del Carmen</div>
-              <p class="text-secondary mb-3">Un oasis boutique de descanso, sabor y bienestar.</p>
-              <div class="d-flex gap-3">
-                <a href="#" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
-                <a href="#" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
-                <a href="#" aria-label="X"><i class="bi bi-twitter-x"></i></a>
-              </div>
+            <div class="col-12 col-md">
+              <div class="brand h4">Hotel el Rincón del Carmen Hotel</div>
+              <p class="text-secondary">Luxury · Wellness · Gastronomy</p>
             </div>
-            <div class="col-6 col-lg-4">
-              <div class="fw-semibold mb-2">Explorar</div>
+            <div class="col-6 col-md">
+              <div class="fw-bold mb-2">Explora</div>
               <ul class="list-unstyled">
-                <li><a href="index.html">Inicio</a></li>
-                <li><a href="reservas.html">Reservas</a></li>
-                <li><a href="contacto.html">Contacto</a></li>
+                <li><a href="rooms.html">Habitaciones</a></li>
+                <li><a href="booking.html">Reservar</a></li>
+                <li><a href="history.html">Historia</a></li>
+                <li><a href="contact.html">Contacto</a></li>
               </ul>
-            </div>
-            <div class="col-6 col-lg-4">
-              <div class="fw-semibold mb-2">Contacto</div>
-              <ul class="list-unstyled">
-                <li>Calle 123 #45-67, Bucaramanga</li>
-                <li>+57 300 000 0000</li>
-                <li><a href="mailto:contacto@rincondelcarmen.com">contacto@rincondelcarmen.com</a></li>
-              </ul>
-              <small class="text-secondary">© ${y} · Todos los derechos reservados</small>
             </div>
           </div>
+          <hr class="border-secondary opacity-25 my-4"/>
+          <small class="text-secondary">© 2025 Hotel el Rincón del Carmen</small>
         </div>
       </footer>`;
   }
 }
-customElements.define('app-footer', AppFooter);
+customElements.define('site-footer', SiteFooter);

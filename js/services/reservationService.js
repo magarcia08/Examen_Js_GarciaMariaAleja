@@ -1,45 +1,29 @@
-import { db } from './storage.js';
+
+import { db } from '../storage/storage.js';
 import { overlaps, nights } from '../utils/date.js';
 
-export function searchAvailable({from, to, guests}){
-  const st = db.read();
-  const inRange = (roomId)=> st.reservations
-    .filter(b=>b.roomId===roomId)
-    .every(b=> !overlaps(from, to, b.from, b.to));
+export function searchAvailable({from,to,guests}){
+  const st=db.read(), g=Number(guests);
+  const inRange = (roomId)=>
+    st.reservations.filter(r=>r.roomId===roomId).every(r=>!overlaps(from,to,r.from,r.to));
   return st.rooms
-    .filter(r=> r.maxGuests>=guests && inRange(r.id))
-    .map(r=> ({ ...r, total: nights(from,to) * r.price }));
+    .filter(r => Number(r.maxGuests)===g && inRange(r.id))
+    .map(r => ({...r, total: nights(from,to)*r.price }));
 }
-
-export function createBooking({roomId, userId, from, to, guests}){
-  const st = db.read();
-  // Verify still available
-  const booked = st.reservations.filter(b=>b.roomId===roomId);
-  if(booked.some(b=> overlaps(from, to, b.from, b.to))) throw new Error('La habitación ya no está disponible en ese rango');
-  const room = st.rooms.find(r=>r.id===roomId);
-  if(!room) throw new Error('Habitación no encontrada');
-  const total = nights(from,to) * room.price;
-  const id = 'b'+crypto.randomUUID().slice(0,8);
-  st.reservations.push({ id, roomId, userId, from, to, guests, total, createdAt: Date.now() });
-  db.setState(st);
-  return id;
+export function createReservation({roomId,userId,from,to,guests}){
+  const st=db.read();
+  const room=st.rooms.find(r=>r.id===roomId); if(!room) throw new Error('No existe habitación');
+  if(Number(guests)!==Number(room.maxGuests)) throw new Error('Capacidad exacta requerida');
+  const n=nights(from,to); if(n<=0) throw new Error('Rango inválido');
+  const ok=st.reservations.filter(r=>r.roomId===roomId).every(r=>!overlaps(from,to,r.from,r.to));
+  if(!ok) throw new Error('No disponible');
+  st.reservations.push({ id:crypto.randomUUID(), roomId, userId, from, to, guests:room.maxGuests, total:n*room.price, status:'CONFIRMED' });
+  db.write(st);
 }
-
-export function cancelBooking(id){
-  const st = db.read();
-  st.reservations = st.reservations.filter(b=>b.id!==id);
-  db.setState(st);
-}
-
-export function listMyBookings(userId){
-  const st = db.read();
-  return st.reservations
-    .filter(b=>b.userId===userId)
-    .map(b=> ({ ...b, room: st.rooms.find(r=>r.id===b.roomId) }))
-    .sort((a,b)=> b.createdAt - a.createdAt);
-}
-
-export function listAllBookings(){
-  const st = db.read();
-  return st.reservations.map(b=> ({ ...b, room: st.rooms.find(r=>r.id===b.roomId), user: st.users.find(u=>u.id===b.userId) }));
+export function listAll(){ return db.read().reservations; }
+export function listByUser(uid){ return db.read().reservations.filter(r=>r.userId===uid); }
+export function cancelReservation(id, me){
+  if(me?.role!=='admin') throw new Error('Solo admin');
+  const st=db.read(); const i=st.reservations.findIndex(r=>r.id===id); if(i===-1) throw new Error('No existe');
+  st.reservations.splice(i,1); db.write(st);
 }

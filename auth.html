@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Auth — Hotel el Rincón del Carmen</title>
+<link rel="stylesheet" href="css/bootstrap/bootstrap.css" />
+<link rel="stylesheet" href="css/styles.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+<style>
+  .auth-wrap{
+    min-height: 92vh; display:grid; place-items:center;
+    background:
+      radial-gradient(1200px 500px at 10% 10%, #0f766e15, transparent 60%),
+      radial-gradient(1200px 500px at 90% 90%, #cba56022, transparent 60%);
+  }
+  .auth-card{
+    border:0; border-radius:1.25rem; overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,.12);
+    background:#fff;
+  }
+  .auth-hero{
+    background:
+      linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.55)),
+      url('https://picsum.photos/seed/rc-auth/1200/1200') center/cover no-repeat;
+    color:#fff;
+  }
+  .auth-hero .brand{
+    font-weight:800; letter-spacing:.4px;
+  }
+  .nav-pills .nav-link{
+    border-radius:999px;
+  }
+  .nav-pills .nav-link.active{
+    background:var(--teal-700);
+  }
+  .form-floating>.form-control, .form-floating>.form-select{
+    border-radius:0.85rem;
+  }
+  .input-icon{
+    position:relative;
+  }
+  .input-icon .toggle-pass{
+    position:absolute; right:.75rem; top:50%; transform:translateY(-50%);
+    border:0; background:transparent; color:var(--slate-400);
+  }
+  .tiny{
+    font-size:.85rem; color:var(--slate-400);
+  }
+</style>
+</head>
+<body>
+  <site-navbar></site-navbar>
+
+  <main class="auth-wrap container py-5">
+    <div class="row g-0 auth-card">
+      <!-- Lado visual/branding -->
+      <div class="col-lg-5 auth-hero d-none d-lg-block">
+        <div class="h-100 p-4 d-flex flex-column justify-content-between">
+          <div>
+            <span class="badge bg-warning text-dark mb-3" style="--bs-bg-opacity:.85">Hotel Boutique</span>
+            <h2 class="brand">El Rincón del Carmen</h2>
+            <p class="mb-0 text-white-50">Bienestar, gastronomía y diseño.</p>
+          </div>
+          <div class="small text-white-50">
+            <i class="bi bi-shield-lock me-1"></i> Tus datos están protegidos.
+          </div>
+        </div>
+      </div>
+
+      <!-- Lado de formularios -->
+      <div class="col-lg-7 bg-white">
+        <div class="p-4 p-lg-5">
+          <h1 class="section-title mb-3">Tu cuenta</h1>
+
+          <ul class="nav nav-pills mb-4" role="tablist">
+            <li class="nav-item">
+              <button class="nav-link active d-flex align-items-center gap-2" data-bs-toggle="pill" data-bs-target="#pLogin">
+                <i class="bi bi-box-arrow-in-right"></i> Ingresar
+              </button>
+            </li>
+            <li class="nav-item ms-2">
+              <button class="nav-link d-flex align-items-center gap-2" data-bs-toggle="pill" data-bs-target="#pRegister">
+                <i class="bi bi-person-plus"></i> Registrarse
+              </button>
+            </li>
+          </ul>
+
+          <div class="tab-content">
+            <!-- LOGIN -->
+            <div class="tab-pane fade show active" id="pLogin">
+              <div class="card border-0">
+                <div class="card-body p-0">
+                  <div class="form-floating mb-3">
+                    <input id="lgEmail" type="email" class="form-control" placeholder="name@email.com" />
+                    <label for="lgEmail"><i class="bi bi-envelope me-1"></i> Email</label>
+                  </div>
+
+                  <div class="mb-2 input-icon">
+                    <div class="form-floating">
+                      <input id="lgPass" type="password" class="form-control" placeholder="••••••••" />
+                      <label for="lgPass"><i class="bi bi-key me-1"></i> Contraseña</label>
+                    </div>
+                    <button type="button" class="toggle-pass" data-toggle="#lgPass" aria-label="Mostrar u ocultar contraseña">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                  </div>
+
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="remember" />
+                      <label for="remember" class="form-check-label tiny">Recordarme</label>
+                    </div>
+                    <a href="#" class="tiny">¿Olvidaste tu contraseña?</a>
+                  </div>
+
+                  <button id="btnLogin" class="btn btn-primary w-100 py-2">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Ingresar
+                  </button>
+                </div>
+              </div>
+              <p class="tiny mt-3">¿No tienes cuenta? <a data-bs-toggle="pill" data-bs-target="#pRegister" class="fw-semibold">Regístrate aquí</a>.</p>
+            </div>
+
+            <!-- REGISTER -->
+            <div class="tab-pane fade" id="pRegister">
+              <div class="card border-0">
+                <div class="card-body p-0">
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <div class="form-floating">
+                        <input id="rgDni" class="form-control" placeholder="DNI" />
+                        <label for="rgDni"><i class="bi bi-person-vcard me-1"></i> DNI</label>
+                      </div>
+                    </div>
+                    <div class="col-md-8">
+                      <div class="form-floating">
+                        <input id="rgName" class="form-control" placeholder="Nombre completo" />
+                        <label for="rgName"><i class="bi bi-person me-1"></i> Nombre</label>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-floating">
+                        <input id="rgEmail" type="email" class="form-control" placeholder="email@dominio.com" />
+                        <label for="rgEmail"><i class="bi bi-envelope me-1"></i> Email</label>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-floating">
+                        <input id="rgPhone" class="form-control" placeholder="Teléfono" />
+                        <label for="rgPhone"><i class="bi bi-phone me-1"></i> Teléfono</label>
+                      </div>
+                    </div>
+                    <div class="col-12 input-icon">
+                      <div class="form-floating">
+                        <input id="rgPass" type="password" class="form-control" placeholder="Contraseña" />
+                        <label for="rgPass"><i class="bi bi-key me-1"></i> Contraseña (mín. 6)</label>
+                      </div>
+                      <button type="button" class="toggle-pass" data-toggle="#rgPass" aria-label="Mostrar u ocultar contraseña">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <button id="btnRegister" class="btn btn-primary w-100 py-2 mt-3">
+                    <i class="bi bi-person-check me-1"></i> Crear cuenta
+                  </button>
+                </div>
+              </div>
+              <p class="tiny mt-3">Al registrarte aceptas nuestra <a href="#">Política de Privacidad</a>.</p>
+            </div>
+          </div>
+
+          <hr class="my-4" />
+          <div class="tiny">
+            <i class="bi bi-lock-fill me-1"></i> Este inicio de sesión es una simulación con <strong>LocalStorage</strong>.
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <site-footer></site-footer>
+
+  <script src="js/bootstrap/bootstrap.bundle.js"></script>
+  <script type="module">
+    import './app.js';
+    import './js/components/navbar.js';
+    import './js/components/footer.js';
+    import { login, register } from './js/services/authService.js';
+    import { toast } from './js/utils/ui.js';
+
+    // Mostrar/ocultar contraseña (reutilizable)
+    document.querySelectorAll('.toggle-pass').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const input = document.querySelector(btn.dataset.toggle);
+        if(!input) return;
+        input.type = input.type === 'password' ? 'text' : 'password';
+        btn.querySelector('i').className = input.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+      });
+    });
+
+    // Login
+    document.getElementById('btnLogin').addEventListener('click', ()=>{
+      try{
+        const email = document.getElementById('lgEmail').value.trim();
+        const password = document.getElementById('lgPass').value.trim();
+        if(!email || !password) return toast('Completa email y contraseña','warning');
+        login({email,password});
+        toast('¡Bienvenido!','success');
+        location.href='index.html';
+      }catch(e){ toast(e.message,'danger'); }
+    });
+
+    // Registro
+    document.getElementById('btnRegister').addEventListener('click', ()=>{
+      try{
+        const dni = document.getElementById('rgDni').value.trim();
+        const name = document.getElementById('rgName').value.trim();
+        const email = document.getElementById('rgEmail').value.trim();
+        const phone = document.getElementById('rgPhone').value.trim();
+        const password = document.getElementById('rgPass').value.trim();
+        if(!dni || !name || !email || !password) return toast('Completa todos los campos obligatorios','warning');
+        register({dni,name,email,phone,password});
+        toast('Cuenta creada','success');
+        location.href='index.html';
+      }catch(e){ toast(e.message,'danger'); }
+    });
+  </script>
+</body>
+</html>

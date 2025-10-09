@@ -1,0 +1,1 @@
+import { db } from './js/storage/storage.js'; db.seed();

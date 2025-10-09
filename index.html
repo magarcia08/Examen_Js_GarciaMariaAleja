@@ -1,224 +1,52 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-  <title>Hotel El Rincón del Carmen — Boutique & Wellness</title>
 
-  <!-- Bootstrap local -->
-  <link rel="stylesheet" href="css/bootstrap/bootstrap.css" />
-  <!-- Estilos del proyecto -->
-  <link rel="stylesheet" href="css/styles.css" />
+<!DOCTYPE html><html lang="es"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hotel el Rincón del Carmen Hotel — Luxury & Wellness</title>
+<link rel="stylesheet" href="css/bootstrap/bootstrap.css">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+</head><body>
+<site-navbar></site-navbar>
 
-  <!-- Fuente + Iconos -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
-
-  <!-- JS Bootstrap local -->
-  <script defer src="js/bootstrap/bootstrap.bundle.js"></script>
-  <!-- App (Web Components + lógica). Asegúrate que app.js importe navbar y footer -->
-  <script type="module" src="js/app.js"></script>
-
-  <!-- Meta social -->
-  <meta property="og:title" content="Hotel El Rincón del Carmen — Boutique & Wellness" />
-  <meta property="og:description" content="Un oasis boutique en el corazón de la ciudad. Descanso, sabor y bienestar." />
-  <meta property="og:image" content="https://picsum.photos/seed/rc-hero/1200/630" />
-  <meta name="theme-color" content="#0F766E" />
-</head>
-<body class="bg-body">
-
-  <!-- Navbar ÚNICA -->
-  <app-navbar active="home"></app-navbar>
-
-  <!-- HERO -->
-  <header class="hero position-relative overflow-hidden">
-    <div class="container py-5 text-center text-white">
-      <span class="badge bg-white text-dark fw-semibold mb-3">Boutique & Wellness</span>
-      <h1 class="headline display-5 fw-800 mb-3">Descubre tu rincón favorito en la ciudad</h1>
-      <p class="lead mx-auto" style="max-width: 720px;">
-        Habitaciones acogedoras, spa, gastronomía de autor y una atención hecha a tu medida.
-      </p>
-      <div class="d-flex justify-content-center gap-3 mt-4">
-        <a href="reservas.html" class="btn btn-primary btn-lg shadow-sm">
-          <i class="bi bi-calendar2-week me-2"></i> Reservar ahora
-        </a>
-        <a href="#destacadas" class="btn btn-light btn-lg shadow-sm">
-          Explorar habitaciones
-        </a>
-      </div>
-
-      <!-- Trust bar -->
-      <div class="d-flex flex-wrap gap-3 justify-content-center mt-4 opacity-75 small">
-        <span><i class="bi bi-award me-1"></i>Estándar Boutique</span>
-        <span>·</span>
-        <span><i class="bi bi-wifi me-1"></i>Wi-Fi de alta velocidad</span>
-        <span>·</span>
-        <span><i class="bi bi-cup-hot me-1"></i>Desayuno incluido</span>
-        <span>·</span>
-        <span><i class="bi bi-spa me-1"></i>Spa & zonas húmedas</span>
-      </div>
+<header class="hero position-relative">
+  <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
+    <div class="carousel-inner">
+      <div class="carousel-item active" style="background-image:url('https://picsum.photos/seed/aurum-hero1/1600/900')"></div>
+      <div class="carousel-item" style="background-image:url('https://picsum.photos/seed/aurum-hero2/1600/900')"></div>
+      <div class="carousel-item" style="background-image:url('https://picsum.photos/seed/aurum-hero3/1600/900')"></div>
     </div>
-  </header>
+    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon"></span><span class="visually-hidden">Anterior</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+      <span class="carousel-control-next-icon"></span><span class="visually-hidden">Siguiente</span>
+    </button>
+  </div>
+  <div class="overlay"></div>
+  <div class="caption">
+    <div class="container">
+      <h1 class="headline display-5 mb-3">Un hotel de clase mundial</h1>
+      <p class="lead">Habitaciones de diseño, spa, gastronomía de autor.</p>
+      <a class="btn btn-primary btn-lg" href="booking.html">Buscar disponibilidad</a>
+    </div>
+  </div>
+</header>
 
-  <main>
-    <!-- Booking teaser (lleva a Reservas) -->
-    <section class="container">
-      <div class="booking-sticky p-3 mt-n4 mt-md-n5">
-        <div class="row g-3 align-items-end">
-          <div class="col-12 col-lg">
-            <div class="text-muted small mb-1">Planifica tu estadía</div>
-            <h2 class="h5 m-0">Consulta disponibilidad por fechas y huéspedes</h2>
-          </div>
-          <div class="col-12 col-md-4 col-lg-3 d-grid">
-            <a href="reservas.html" class="btn btn-dark btn-lg">
-              <i class="bi bi-search me-2"></i> Buscar disponibilidad
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
+<main class="container my-5">
+  <h2 class="section-title mb-3">Habitaciones destacadas</h2>
+  <div id="homeRooms" class="row row-cols-1 row-cols-md-3 g-3"></div>
+</main>
 
-    <!-- Habitaciones destacadas (renderizadas desde js/app.js) -->
-    <section id="destacadas" class="container py-5">
-      <div class="d-flex align-items-baseline justify-content-between mb-3">
-        <h2 class="section-title m-0">Habitaciones destacadas</h2>
-        <a class="text-decoration-none" href="reservas.html">
-          Ver todas <i class="bi bi-arrow-right"></i>
-        </a>
-      </div>
-      <div id="homeRooms" class="row g-4"></div>
-    </section>
+<site-footer></site-footer>
 
-    <!-- Amenidades / Experiencias -->
-    <section class="bg-light">
-      <div class="container py-5">
-        <div class="row g-4">
-          <div class="col-12 col-lg-4">
-            <h2 class="section-title">Experiencias exclusivas</h2>
-            <p class="text-muted">Cuidamos cada detalle para que tu visita se convierta en un recuerdo inolvidable.</p>
-            <ul class="list-unstyled mt-3 small">
-              <li class="mb-2"><i class="bi bi-check2-circle me-2 text-success"></i>Recepción 24/7 y late check-out (según disponibilidad)</li>
-              <li class="mb-2"><i class="bi bi-check2-circle me-2 text-success"></i>Menú de almohadas y aromaterapia</li>
-              <li class="mb-2"><i class="bi bi-check2-circle me-2 text-success"></i>Room service 24/7</li>
-            </ul>
-            <a href="reservas.html" class="btn btn-primary mt-2">Reservar estadía</a>
-          </div>
-          <div class="col-12 col-md-4">
-            <div class="card h-100 shadow-sm border-0">
-              <img src="https://picsum.photos/seed/spa/600/400" class="card-img-top" alt="Spa & Wellness" />
-              <div class="card-body">
-                <h5 class="card-title">Spa & Wellness</h5>
-                <p class="card-text small text-muted">Masajes, sauna, turco y jacuzzi para resetear cuerpo y mente.</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-12 col-md-4">
-            <div class="card h-100 shadow-sm border-0">
-              <img src="https://picsum.photos/seed/gourmet/600/400" class="card-img-top" alt="Gastronomía de autor" />
-              <div class="card-body">
-                <h5 class="card-title">Gastronomía de autor</h5>
-                <p class="card-text small text-muted">Sabores locales con un toque contemporáneo. Desayuno incluido.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Testimonios -->
-    <section class="container py-5">
-      <div class="row g-4">
-        <div class="col-12">
-          <h2 class="section-title">Lo que dicen nuestros huéspedes</h2>
-        </div>
-        <div class="col-12 col-md-4">
-          <div class="card h-100 border-0 shadow-sm">
-            <div class="card-body">
-              <div class="d-flex align-items-center mb-2">
-                <i class="bi bi-star-fill me-1 text-warning"></i>
-                <i class="bi bi-star-fill me-1 text-warning"></i>
-                <i class="bi bi-star-fill me-1 text-warning"></i>
-                <i class="bi bi-star-fill me-1 text-warning"></i>
-                <i class="bi bi-star-fill me-2 text-warning"></i>
-                <span class="small text-muted">5.0</span>
-              </div>
-              <p class="mb-3">“La cama más cómoda y el spa perfecto para cerrar el día. Volveré sin dudar.”</p>
-              <small class="text-muted">— Laura G.</small>
-            </div>
-          </div>
-        </div>
-        <div class="col-12 col-md-4">
-          <div class="card h-100 border-0 shadow-sm">
-            <div class="card-body">
-              <div class="d-flex align-items-center mb-2">
-                <i class="bi bi-star-fill me-1 text-warning"></i>
-                <i class="bi bi-star-fill me-1 text-warning"></i>
-                <i class="bi bi-star-fill me-1 text-warning"></i>
-                <i class="bi bi-star-fill me-1 text-warning"></i>
-                <i class="bi bi-star-half me-2 text-warning"></i>
-                <span class="small text-muted">4.5</span>
-              </div>
-              <p class="mb-3">“Ubicación excelente y el desayuno delicioso. El rooftop es un plus.”</p>
-              <small class="text-muted">— Diego M.</small>
-            </div>
-          </div>
-        </div>
-        <div class="col-12 col-md-4">
-          <div class="card h-100 border-0 shadow-sm">
-            <div class="card-body">
-              <div class="d-flex align-items-center mb-2">
-                <i class="bi bi-star-fill me-1 text-warning"></i>
-                <i class="bi bi-star-fill me-1 text-warning"></i>
-                <i class="bi bi-star-fill me-1 text-warning"></i>
-                <i class="bi bi-star-fill me-1 text-warning"></i>
-                <i class="bi bi-star-fill me-2 text-warning"></i>
-                <span class="small text-muted">5.0</span>
-              </div>
-              <p class="mb-3">“Servicio impecable y atención genuina. Se siente como en casa.”</p>
-              <small class="text-muted">— Camila R.</small>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Mapa / Contacto corto -->
-    <section class="container pb-5">
-      <div class="row g-4 align-items-center">
-        <div class="col-12 col-lg-6">
-          <h2 class="section-title">Una ubicación estratégica</h2>
-          <p class="text-muted">Cerca de los mejores restaurantes y centros comerciales de la ciudad. Fácil acceso y transporte.</p>
-          <a href="contacto.html" class="btn btn-outline-dark">
-            <i class="bi bi-geo-alt me-2"></i> Ver cómo llegar
-          </a>
-        </div>
-        <div class="col-12 col-lg-6">
-          <div class="ratio ratio-16x9 rounded overflow-hidden shadow-sm">
-            <iframe
-              title="Mapa"
-              src="https://maps.google.com/maps?q=Bucaramanga&t=&z=13&ie=UTF8&iwloc=&output=embed"
-              style="border:0;" allowfullscreen="" loading="lazy">
-            </iframe>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- Footer ÚNICO -->
-  <app-footer></app-footer>
-
-  <!-- Modales globales -->
-  <login-modal></login-modal>
-  <reservation-modal></reservation-modal>
-
-  <!-- Helper CSS pequeñas utilidades -->
-  <style>
-    .fw-800{font-weight:800}
-    .mt-n4{margin-top:-1.5rem} .mt-n5{margin-top:-3rem}
-    @media (min-width: 992px){ .mt-n4{margin-top:-2rem} .mt-n5{margin-top:-4rem} }
-  </style>
-</body>
-</html>
+<script src="js/bootstrap/bootstrap.bundle.js"></script>
+<script type="module">
+  import './app.js';
+  import './js/components/navbar.js';
+  import './js/components/footer.js';
+  import { listRooms } from './js/services/roomService.js';
+  import { roomCard } from './js/components/roomCard.js';
+  const el = document.getElementById('homeRooms');
+  el.innerHTML = listRooms().slice(0,3).map(roomCard).join('');
+</script>
+</body></html>

@@ -1,8 +1,7 @@
-// js/app.js
 // ========= IMPORTS (unificados, sin duplicados) =========
 import './components/navbar.js';
 import './components/footer.js';
-import './components/roomCard.js';
+import './components/roomCard.js';        // por si lo usas en otras vistas
 import './components/searchBar.js';
 import './components/loginRegister.js';
 import './components/reservationModal.js';
@@ -22,13 +21,22 @@ import {
   searchAvailable,
   listMyBookings,
   listAllBookings,
-  cancelBooking,
+  cancelBooking, // valida rol admin en el service
 } from './services/reservationService.js';
 
 import { toast, confirmModal } from './utils/ui.js';
 
 // Expose bootstrap if needed
 window.bootstrap = window.bootstrap || {};
+
+// --- Helper local: normalizar query ---
+function normalizeQuery(q) {
+  if (!q) return q;
+  return {
+    ...q,
+    guests: Number(q.guests), // fuerza number
+  };
+}
 
 // ===================== INDEX (home) =====================
 const homeRooms = document.querySelector('#homeRooms');
@@ -53,22 +61,65 @@ const refreshBtn = document.querySelector('#refreshBookings');
 
 let lastQuery = null;
 
+// Render de resultados COMO CARDS grandes, en grilla
 function renderResults(list) {
   if (!resultsWrap || !resultsCount) return;
+
+  // Grilla responsive: 1/2/3 por fila
+  resultsWrap.classList.add('row', 'row-cols-1', 'row-cols-md-2', 'row-cols-lg-3', 'g-4');
   resultsWrap.innerHTML = '';
+
   list.forEach((r) => {
-    const el = document.createElement('room-card');
-    el.data = r;
-    resultsWrap.appendChild(el);
+    const col = document.createElement('div');
+    col.className = 'col';
+
+    col.innerHTML = `
+      <div class="card h-100 shadow-sm">
+        <img src="${r.img}" class="card-img-top" alt="${r.name}">
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title mb-1">${r.name}</h5>
+          <div class="small text-muted mb-2">${r.beds} camas · Máx ${r.maxGuests} personas</div>
+          <div class="mb-2 fw-bold">$${(r.price || 0).toLocaleString('es-CO')} <small>COP/noche</small></div>
+          <div class="small text-muted">Servicios: ${Array.isArray(r.services) ? r.services.join(', ') : ''}</div>
+
+          <div class="mt-3 d-flex align-items-center gap-2">
+            <span class="badge text-bg-light">
+              <i class="bi bi-cash-coin me-1"></i>
+              Total $${(r.total || 0).toLocaleString('es-CO')}
+            </span>
+            <button class="btn btn-dark btn-sm ms-auto btn-reserve" data-roomid="${r.id}">
+              <i class="bi bi-calendar2-check me-1"></i> Reservar
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    resultsWrap.appendChild(col);
   });
+
+  // Click en "Reservar" abre el modal con la última búsqueda
+  resultsWrap.querySelectorAll('.btn-reserve').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const s = currentUser();
+      if (!s) {
+        document.querySelector('[data-bs-target="#loginModal"]')?.click();
+        return;
+      }
+      resModal?.open({ roomId: btn.dataset.roomid, ...lastQuery });
+    });
+  });
+
   resultsCount.textContent = `${list.length} opción(es)`;
 }
 
+// Área "Mis reservas" SIN botón cancelar para cliente
 function renderMyBookings() {
   if (!myBookingsWrap) return;
   const s = currentUser();
   if (!s) {
-    myBookingsWrap.innerHTML = '<div class="text-muted small">Inicia sesión para ver tus reservas.</div>';
+    myBookingsWrap.innerHTML =
+      '<div class="text-muted small">Inicia sesión para ver tus reservas.</div>';
     return;
   }
   const items = listMyBookings(s.id);
@@ -76,6 +127,7 @@ function renderMyBookings() {
     myBookingsWrap.innerHTML = '<div class="text-muted small">Aún no tienes reservas.</div>';
     return;
   }
+
   myBookingsWrap.innerHTML = items
     .map(
       (b) => `
@@ -84,49 +136,39 @@ function renderMyBookings() {
         <div class="card-body d-flex flex-column">
           <div class="d-flex justify-content-between align-items-center">
             <strong>${b.room?.name || 'Habitación'}</strong>
-            <span class="badge text-bg-light"><i class="bi bi-calendar2-week me-1"></i>${b.from} → ${b.to}</span>
+            <span class="badge text-bg-light">
+              <i class="bi bi-calendar2-week me-1"></i>${b.from} → ${b.to}
+            </span>
           </div>
-          <div class="small text-muted mt-2">${b.guests} huésped(es) · Total $${(b.total || 0).toLocaleString('es-CO')} COP</div>
-          <div class="mt-3 d-flex gap-2">
-            <button class="btn btn-outline-danger btn-sm" data-cancel="${b.id}"><i class="bi bi-x-circle"></i> Cancelar</button>
+          <div class="small text-muted mt-2">
+            ${b.guests} huésped(es) · Total $${(b.total || 0).toLocaleString('es-CO')} COP
+          </div>
+          <div class="alert alert-info mt-3 mb-0 p-2 small" role="alert">
+            Para cambios o cancelaciones, por favor contacta al administrador.
           </div>
         </div>
       </div>
     </div>`
     )
     .join('');
-  myBookingsWrap.querySelectorAll('[data-cancel]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const ok = await confirmModal('Cancelar reserva', '¿Seguro deseas cancelar esta reserva?');
-      if (!ok) return;
-      cancelBooking(btn.dataset.cancel);
-      toast('Reserva cancelada', 'warning');
-      renderMyBookings();
-      if (lastQuery) renderResults(searchAvailable(lastQuery));
-    });
-  });
 }
 
 if (searchBar) {
+  // resultados emitidos por el componente de búsqueda
   searchBar.addEventListener('results', (e) => {
-    lastQuery = e.detail.q;
-    renderResults(e.detail.results);
+    lastQuery = normalizeQuery(e.detail.q);
+    renderResults(e.detail.results || searchAvailable(lastQuery));
   });
+
   // consulta inicial (hoy/mañana, 2 huéspedes)
   const fd = new FormData(searchBar.querySelector('form'));
-  lastQuery = { from: fd.get('from'), to: fd.get('to'), guests: +fd.get('guests') };
+  lastQuery = normalizeQuery({
+    from: fd.get('from'),
+    to: fd.get('to'),
+    guests: fd.get('guests'),
+  });
   renderResults(searchAvailable(lastQuery));
 
-  if (resultsWrap) {
-    resultsWrap.addEventListener('reserve', (e) => {
-      const s = currentUser();
-      if (!s) {
-        document.querySelector('[data-bs-target="#loginModal"]')?.click();
-        return;
-      }
-      resModal?.open({ roomId: e.detail.roomId, ...lastQuery });
-    });
-  }
   resModal?.addEventListener('booked', () => {
     renderMyBookings();
   });
@@ -187,14 +229,24 @@ function renderRoomsAdmin() {
     });
   });
   roomsAdmin.querySelectorAll('[data-edit]').forEach((btn) => {
-    btn.addEventListener('click', () => openRoomForm(listRooms().find((x) => x.id === btn.dataset.edit)));
+    btn.addEventListener('click', () =>
+      openRoomForm(listRooms().find((x) => x.id === btn.dataset.edit))
+    );
   });
 }
 
 function openRoomForm(room) {
   const wrapper = document.createElement('div');
   const isNew = !room;
-  room = room || { name: '', beds: 1, maxGuests: 2, price: 100000, services: ['wifi'], img: 'https://picsum.photos/seed/new/800/600' };
+  room =
+    room || {
+      name: '',
+      beds: 1,
+      maxGuests: 2,
+      price: 100000,
+      services: ['wifi'],
+      img: 'https://picsum.photos/seed/new/800/600',
+    };
   wrapper.innerHTML = `
     <div class="modal fade" id="roomForm" tabindex="-1">
       <div class="modal-dialog"><div class="modal-content">
@@ -222,10 +274,14 @@ function openRoomForm(room) {
     const fd = new FormData(wrapper.querySelector('form'));
     const data = {
       name: fd.get('name'),
-      beds: +fd.get('beds'),
-      maxGuests: +fd.get('maxGuests'),
-      price: +fd.get('price'),
-      services: fd.get('services').split(',').map((s) => s.trim()).filter(Boolean),
+      beds: Number(fd.get('beds')),
+      maxGuests: Number(fd.get('maxGuests')),
+      price: Number(fd.get('price')),
+      services: fd
+        .get('services')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
       img: fd.get('img'),
     };
     if (isNew) {
@@ -254,19 +310,31 @@ function renderBookingsAdmin() {
             <div class="small text-muted">${b.from} → ${b.to} · ${b.guests} huésped(es)</div>
           </div>
           <div class="d-flex gap-2">
-            <button class="btn btn-outline-danger btn-sm" data-cancel="${b.id}"><i class="bi bi-x-circle"></i> Cancelar</button>
+            <button class="btn btn-outline-danger btn-sm" data-cancel="${b.id}">
+              <i class="bi bi-x-circle"></i> Cancelar
+            </button>
           </div>
         </div>
       </div>`;
     bookingsAdmin.appendChild(el);
   });
+
   bookingsAdmin.querySelectorAll('[data-cancel]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const ok = await confirmModal('Cancelar reserva', '¿Confirmas la cancelación?');
       if (!ok) return;
-      cancelBooking(btn.dataset.cancel);
-      toast('Reserva cancelada', 'warning');
-      renderBookingsAdmin();
+      try {
+        const removed = cancelBooking(btn.dataset.cancel);
+        if (removed) {
+          toast('Reserva cancelada', 'warning');
+          renderBookingsAdmin();
+          if (lastQuery && resultsWrap) renderResults(searchAvailable(lastQuery));
+        } else {
+          toast('No se encontró la reserva.', 'danger');
+        }
+      } catch (err) {
+        toast(err.message || 'No autorizado', 'danger');
+      }
     });
   });
 }
