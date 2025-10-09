@@ -1,41 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contacto — Hotel el Rincón del Carmen</title>
+  <link rel="stylesheet" href="css/bootstrap/bootstrap.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <site-navbar></site-navbar>
 
-<!DOCTYPE html><html lang="es"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Contacto — Hotel el Rincón del Carmen</title>
-<link rel="stylesheet" href="css/bootstrap/bootstrap.css"><link rel="stylesheet" href="css/styles.css">
-</head><body>
-<site-navbar></site-navbar>
-<main class="container my-5" style="max-width:900px">
-  <h1 class="section-title mb-3">Contáctanos</h1>
-  <div class="row g-4">
-    <div class="col-12 col-md-6">
-      <div class="card p-3 h-100">
-        <h5>Escríbenos</h5>
-        <form id="contactForm">
-          <div class="mb-3"><label class="form-label">Nombre</label><input class="form-control" name="name" required></div>
-          <div class="mb-3"><label class="form-label">Email</label><input class="form-control" name="email" type="email" required></div>
-          <div class="mb-3"><label class="form-label">Mensaje</label><textarea class="form-control" name="msg" rows="4" required></textarea></div>
-          <button class="btn btn-primary">Enviar</button>
-        </form>
+  <main class="container my-5" style="max-width:900px">
+    <h1 class="section-title text-center mb-4">Contáctanos</h1>
+    <p class="text-center text-muted mb-5">
+      ¿Tienes preguntas, comentarios o deseas reservar directamente? Escríbenos y estaremos encantados de ayudarte.
+    </p>
+
+    <div class="row g-4">
+      <!-- Formulario -->
+      <div class="col-12 col-md-6">
+        <div class="card p-4 shadow-sm h-100">
+          <h5 class="mb-3 text-primary"><i class="bi bi-envelope"></i> Escríbenos</h5>
+          <form id="contactForm">
+            <div class="mb-3">
+              <label class="form-label">Nombre</label>
+              <input class="form-control" name="name" placeholder="Tu nombre completo" required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input class="form-control" name="email" type="email" placeholder="tucorreo@ejemplo.com" required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Mensaje</label>
+              <textarea class="form-control" name="msg" rows="4" placeholder="Cuéntanos cómo podemos ayudarte..." required></textarea>
+            </div>
+            <button class="btn btn-primary w-100">Enviar mensaje</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Ubicación -->
+      <div class="col-12 col-md-6">
+        <div class="card p-4 shadow-sm h-100">
+          <h5 class="mb-3 text-primary"><i class="bi bi-geo-alt"></i> Ubicación</h5>
+          <p class="mb-1 fw-semibold">Cra 1 # 23 - 45, Centro</p>
+          <p class="mb-3 text-muted">Bucaramanga, Colombia</p>
+          <div class="ratio ratio-16x9 rounded overflow-hidden">
+            <iframe
+              src="https://maps.google.com/maps?q=bucaramanga&t=&z=13&ie=UTF8&iwloc=&output=embed"
+              loading="lazy"
+              style="border:0"
+              allowfullscreen>
+            </iframe>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="col-12 col-md-6">
-      <div class="card p-3 h-100">
-        <h5>Ubicación</h5>
-        <p class="mb-1">Cra 1 # 23 - 45, Centro</p>
-        <p class="mb-3">Bucaramanga, Colombia</p>
-        <div class="ratio ratio-16x9"><iframe src="https://maps.google.com/maps?q=bucaramanga&t=&z=13&ie=UTF8&iwloc=&output=embed" loading="lazy"></iframe></div>
-      </div>
-    </div>
-  </div>
-</main>
-<site-footer></site-footer>
-<script src="js/bootstrap/bootstrap.bundle.js"></script>
-<script type="module">
-  import './app.js'; import './js/components/navbar.js'; import './js/components/footer.js';
-  import { toast } from './js/utils/ui.js';
-  document.getElementById('contactForm').addEventListener('submit', (e)=>{
-    e.preventDefault(); toast('Mensaje enviado. ¡Gracias!','success'); e.target.reset();
-  });
-</script>
-</body></html>
+  </main>
+
+  <site-footer></site-footer>
+
+  <script src="js/bootstrap/bootstrap.bundle.js"></script>
+  <script type="module">
+    import './app.js';
+    import './js/components/navbar.js';
+    import './js/components/footer.js';
+    import { toast } from './js/utils/ui.js';
+
+    document.getElementById('contactForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      toast('Mensaje enviado. ¡Gracias por contactarnos!', 'success');
+      e.target.reset();
+    });
+  </script>
+</body>
+</html>

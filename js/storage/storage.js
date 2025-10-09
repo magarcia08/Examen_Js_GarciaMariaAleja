@@ -1,7 +1,7 @@
 // storage/storage.js — Con control de versión y fusión no destructiva
 const KEY      = 'aurum-hotel-db';
 const VER_KEY  = 'aurum-hotel-db-version';
-const DB_VERSION = '1.1.0'; // ⬅️ Súbelo cuando cambies imágenes/seed
+const DB_VERSION = '1.1.0'; 
 
 function defaultDB(){
   return {
@@ -196,9 +196,7 @@ export const db = {
     localStorage.removeItem(VER_KEY);
     this.seed();
   },
-  /** Asegura que la versión en localStorage coincida con DB_VERSION.
-   *  Si no coincide:
-   *   - Si hay data previa: fusiona conservando usuarios/reservas y actualiza fotos/textos/amenities de rooms seed.
+  /**  fusiona conservando usuarios/reservas y actualiza fotos/textos/amenities de rooms seed.
    *   - Si no hay data: siembra seed nuevo.
    */
   ensureVersion(){

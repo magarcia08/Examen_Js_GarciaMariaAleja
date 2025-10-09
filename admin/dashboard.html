@@ -1,125 +1,165 @@
-
-<!DOCTYPE html><html lang="es"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Admin — Hotel el Rincón del Carmen</title>
-<link rel="stylesheet" href="../css/bootstrap/bootstrap.css"><link rel="stylesheet" href="../css/styles.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-</head><body>
-<site-navbar></site-navbar>
-<main class="container my-5">
-  <h1 class="section-title mb-3">Panel de gestión</h1>
-  <ul class="nav nav-tabs">
-    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabRooms">Habitaciones</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabRes">Reservas</button></li>
-  </ul>
-  <div class="tab-content mt-3">
-    <div class="tab-pane fade show active" id="tabRooms">
-      <div class="d-flex justify-content-end mb-2">
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#roomModal" id="btnNewRoom">Nueva habitación</button>
-      </div>
-      <div class="table-responsive">
-        <table class="table table-sm align-middle">
-          <thead><tr><th>Nombre</th><th>Capacidad</th><th>Precio</th><th></th></tr></thead>
-          <tbody id="tblRooms"></tbody>
-        </table>
-      </div>
-    </div>
-    <div class="tab-pane fade" id="tabRes">
-      <div class="table-responsive">
-        <table class="table table-sm align-middle">
-          <thead><tr><th>Habitación</th><th>Usuario</th><th>Desde</th><th>Hasta</th><th>Total</th><th></th></tr></thead>
-          <tbody id="tblRes"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</main>
+<link rel="stylesheet" href="../css/bootstrap/bootstrap.css" />
+<link rel="stylesheet" href="../css/styles.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+<style>
+  /* Mejora visual simple (modo junior) */
+  .admin-toolbar{background:#fff; border-radius:1rem; box-shadow:0 8px 24px rgba(0,0,0,.06)}
+  .kpi-card{
+    border:0; border-radius:1rem; background:#fff;
+    box-shadow:0 8px 24px rgba(0,0,0,.06);
+  }
+  .kpi-icon{
+    width:46px; height:46px; display:grid; place-items:center; border-radius:14px;
+    background:#0f766e1a; color:var(--teal-700);
+  }
+  .tab-pane .table{background:#fff; border-radius:1rem; overflow:hidden}
+</style>
+</head>
+<body>
+  <site-navbar></site-navbar>
 
-<!-- Modal Nueva/Editar -->
-<div class="modal fade" id="roomModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog"><div class="modal-content">
-    <div class="modal-header"><h5 class="modal-title" id="roomModalTitle">Nueva habitación</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
-    <div class="modal-body">
-      <form id="roomForm">
-        <div class="mb-3"><label class="form-label">Nombre</label><input class="form-control" name="name" required></div>
-        <div class="row g-3">
-          <div class="col"><label class="form-label">Camas</label><input class="form-control" name="beds" type="number" min="1" value="1"></div>
-          <div class="col"><label class="form-label">Máx personas</label><input class="form-control" name="maxGuests" type="number" min="1" value="2"></div>
+  <main class="container my-5">
+    <h1 class="section-title mb-3">Panel de gestión</h1>
+
+    <!-- Guard / Content (necesarios para app.js) -->
+    <div id="adminGuard" class="alert alert-warning d-none">Debes iniciar sesión como administrador.</div>
+    <div id="adminContent" class="d-none">
+      <!-- KPIs -->
+      <div class="row g-3 mb-3">
+        <div class="col-12 col-md-4">
+          <div class="kpi-card p-3 d-flex align-items-center gap-3">
+            <div class="kpi-icon"><i class="bi bi-door-open"></i></div>
+            <div>
+              <div class="fw-bold">Habitaciones</div>
+              <div id="statRooms" class="fs-5">0</div>
+            </div>
+          </div>
         </div>
-        <div class="mt-3"><label class="form-label">Precio/noche (COP)</label><input class="form-control" name="price" type="number" min="1" value="100000"></div>
-        <div class="mt-3"><label class="form-label">Servicios (coma)</label><input class="form-control" name="amenities" value="wifi"></div>
-        <div class="mt-3"><label class="form-label">Imagen URL</label><input class="form-control" name="imageUrl" value="https://picsum.photos/seed/new/1200/800"></div>
-      </form>
+        <div class="col-12 col-md-4">
+          <div class="kpi-card p-3 d-flex align-items-center gap-3">
+            <div class="kpi-icon"><i class="bi bi-journal-check"></i></div>
+            <div>
+              <div class="fw-bold">Reservas activas</div>
+              <div id="statBookings" class="fs-5">0</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="kpi-card p-3 d-flex align-items-center gap-3">
+            <div class="kpi-icon"><i class="bi bi-people"></i></div>
+            <div>
+              <div class="fw-bold">Huéspedes (en reservas)</div>
+              <div id="statGuests" class="fs-5">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="admin-toolbar p-3 mb-3">
+        <ul class="nav nav-tabs">
+          <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabRooms">Habitaciones</button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabRes">Reservas</button>
+          </li>
+        </ul>
+      </div>
+
+      <div class="tab-content">
+        <!-- Habitaciones -->
+        <div class="tab-pane fade show active" id="tabRooms">
+          <div class="d-flex justify-content-end mb-2">
+            <button class="btn btn-primary" id="btnNewRoom">
+              <i class="bi bi-plus-lg me-1"></i>Nueva habitación
+            </button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead>
+                <tr><th>Nombre</th><th>Capacidad</th><th>Precio</th><th>Servicios</th><th></th></tr>
+              </thead>
+              <tbody id="tblRooms"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Reservas -->
+        <div class="tab-pane fade" id="tabRes">
+          <div class="d-flex justify-content-end mb-2">
+            <button class="btn btn-outline-dark btn-sm" id="refreshAllBookings">
+              <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+            </button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Habitación</th><th>Usuario</th><th>Desde</th><th>Hasta</th>
+                  <th>Total</th><th>Huéspedes</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="tblRes"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="modal-footer"><button class="btn btn-outline-dark" data-bs-dismiss="modal">Cerrar</button><button id="btnSaveRoom" class="btn btn-primary">Guardar</button></div>
-  </div></div>
-</div>
+  </main>
 
-<site-footer></site-footer>
-<script src="../js/bootstrap/bootstrap.bundle.js"></script>
-<script type="module">
-  import '../app.js'; import '../js/components/navbar.js'; import '../js/components/footer.js';
-  import { listRooms, getRoomById, createRoom, updateRoom, deleteRoom } from '../js/services/roomService.js';
-  import { listAll, cancelReservation } from '../js/services/reservationService.js';
-  import { db } from '../js/storage/storage.js';
-  import { currentUser } from '../js/services/authService.js';
-  import { toast } from '../js/utils/ui.js';
+  <!-- Modal Usado por app.js -->
+  <div class="modal fade" id="roomModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog"><div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="roomModalTitle">Nueva habitación</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="roomForm">
+          <div class="mb-3">
+            <label class="form-label">Nombre</label>
+            <input class="form-control" name="name" required>
+          </div>
+          <div class="row g-3">
+            <div class="col">
+              <label class="form-label">Camas</label>
+              <input class="form-control" name="beds" type="number" min="1" value="1">
+            </div>
+            <div class="col">
+              <label class="form-label">Máx personas</label>
+              <input class="form-control" name="maxGuests" type="number" min="1" value="2">
+            </div>
+          </div>
+          <div class="mt-3">
+            <label class="form-label">Precio/noche (COP)</label>
+            <input class="form-control" name="price" type="number" min="1" value="100000">
+          </div>
+          <div class="mt-3">
+            <label class="form-label">Servicios (separados por coma)</label>
+            <input class="form-control" name="amenities" value="wifi">
+          </div>
+          <div class="mt-3">
+            <label class="form-label">Imagen URL</label>
+            <input class="form-control" name="imageUrl" value="https://picsum.photos/seed/new/1200/800">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-dark" data-bs-dismiss="modal">Cerrar</button>
+        <button id="btnSaveRoom" class="btn btn-primary">Guardar</button>
+      </div>
+    </div></div>
+  </div>
 
-  const me=currentUser(); if(!me || me.role!=='admin') location.href='../auth.html';
-
-  function renderRooms(){
-    document.getElementById('tblRooms').innerHTML = listRooms().map(r=>`
-      <tr>
-        <td>${r.name}</td><td>${r.maxGuests} pers</td><td>$${r.price.toLocaleString('es-CO')}</td>
-        <td class="text-end">
-          <button class="btn btn-sm btn-outline-dark" data-edit="${r.id}">Editar</button>
-          <button class="btn btn-sm btn-outline-danger" data-del="${r.id}">Eliminar</button>
-        </td>
-      </tr>`).join('') || '<tr><td colspan="4">Sin habitaciones</td></tr>';
-  }
-  function renderRes(){
-    const st=db.read();
-    document.getElementById('tblRes').innerHTML = listAll().map(x=>{
-      const room=st.rooms.find(r=>r.id===x.roomId); const user=st.users.find(u=>u.id===x.userId);
-      return `<tr><td>${room?.name||'?'}</td><td>${user?.name||'?'}</td><td>${x.from}</td><td>${x.to}</td><td>$${x.total.toLocaleString('es-CO')}</td>
-      <td class="text-end"><button class="btn btn-sm btn-outline-danger" data-cancel="${x.id}">Cancelar</button></td></tr>`;
-    }).join('') || '<tr><td colspan="6">Sin reservas</td></tr>';
-  }
-
-  let editing=null;
-  document.getElementById('btnNewRoom').addEventListener('click', ()=>{ editing=null; document.getElementById('roomModalTitle').textContent='Nueva habitación'; document.getElementById('roomForm').reset(); });
-
-  document.getElementById('tblRooms').addEventListener('click', (ev)=>{
-    const id=ev.target.dataset.edit, del=ev.target.dataset.del;
-    if(id){
-      editing=id; const r=getRoomById(id);
-      document.getElementById('roomModalTitle').textContent='Editar habitación';
-      const f=document.getElementById('roomForm');
-      f.name.value=r.name; f.beds.value=r.beds; f.maxGuests.value=r.maxGuests; f.price.value=r.price;
-      f.amenities.value=(r.amenities||[]).join(', '); f.imageUrl.value=(r.photos&&r.photos[0])||'https://picsum.photos/seed/new/1200/800';
-      new bootstrap.Modal(document.getElementById('roomModal')).show();
-    }
-    if(del && confirm('¿Eliminar habitación?')){ try{ deleteRoom(del, me); toast('Eliminada','success'); renderRooms(); }catch(e){ toast(e.message,'danger'); } }
-  });
-
-  document.getElementById('btnSaveRoom').addEventListener('click', ()=>{
-    const f=document.getElementById('roomForm');
-    const payload={
-      name:f.name.value.trim(), beds:Number(f.beds.value), maxGuests:Number(f.maxGuests.value), price:Number(f.price.value),
-      amenities:f.amenities.value.split(',').map(s=>s.trim()).filter(Boolean), photos:[f.imageUrl.value.trim()||'https://picsum.photos/seed/new/1200/800']
-    };
-    try{
-      if(editing) updateRoom(editing, payload, me); else createRoom(payload, me);
-      toast('Guardado','success'); renderRooms(); bootstrap.Modal.getInstance(document.getElementById('roomModal'))?.hide();
-    }catch(e){ toast(e.message,'danger'); }
-  });
-
-  document.getElementById('tabRes').addEventListener('click', ()=>renderRes());
-  document.addEventListener('click', (ev)=>{
-    const id=ev.target?.dataset?.cancel; if(!id) return;
-    if(confirm('¿Cancelar reserva?')){ try{ cancelReservation(id, me); toast('Cancelada','success'); renderRes(); }catch(e){ toast(e.message,'danger'); } }
-  });
-
-  renderRooms();
-</script>
-</body></html>
+  <site-footer></site-footer>
+  <script src="../js/bootstrap/bootstrap.bundle.js"></script>
+  <script type="module" src="../js/app.js"></script>
+</body>
+</html>
