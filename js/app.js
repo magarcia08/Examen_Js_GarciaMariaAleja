@@ -13,7 +13,11 @@ import './components/reservationModal.js';
 // ========= SERVICES =========
 import { currentUser } from './services/authService.js';
 import { listRooms, createRoom, updateRoom, deleteRoom, getRoomById } from './services/roomService.js';
-import { searchAvailable, listMyBookings, listAllBookings, cancelBooking } from './services/reservationService.js';
+import { 
+  searchAvailable, listMyBookings, listAllBookings, cancelBooking,
+  autoReleaseNoShows, canCheckIn, checkInReservation,
+  BookingStatus
+} from './services/reservationService.js';
 import { toast, confirmModal } from './utils/ui.js';
 
 // ========= HELPERS =========
@@ -46,6 +50,9 @@ const resModal = document.querySelector('reservation-modal');
 const myBookingsWrap = $('#myBookings');
 const refreshBtn = $('#refreshBookings');
 
+// liberar no-shows al arrancar
+autoReleaseNoShows();
+
 let lastQuery = null;
 
 function renderResults(list) {
@@ -72,6 +79,10 @@ function renderResults(list) {
             <button class="btn btn-dark btn-sm ms-auto btn-reserve" data-roomid="${r.id}">
               <i class="bi bi-calendar2-check me-1"></i> Reservar
             </button>
+          </div>
+          <div class="small text-muted mt-2">
+            <i class="bi bi-clock-history me-1"></i>
+            Check-in 14:00 · No-show 16:00 (se libera la reserva)
           </div>
         </div>
       </div>`;
@@ -102,12 +113,18 @@ function renderMyBookings() {
         <div class="card-body d-flex flex-column">
           <div class="d-flex justify-content-between align-items-center">
             <strong>${b.room?.name || 'Habitación'}</strong>
-            <span class="badge text-bg-light"><i class="bi bi-calendar2-week me-1"></i>${b.from} → ${b.to}</span>
+            <span class="badge ${b.status==='CHECKED_IN'?'text-bg-success':(b.status==='CONFIRMED'?'text-bg-secondary':(b.status==='NO_SHOW'?'text-bg-danger':'text-bg-primary'))}">
+              ${b.status}
+            </span>
           </div>
           <div class="small text-muted mt-2">
             ${b.guests} huésped(es) · Total $${(b.total || 0).toLocaleString('es-CO')} COP
+            <br>
+            Check-in: ${b.from} ${b.fromTime||'14:00'} · Check-out: ${b.to} ${b.toTime||'11:00'}
           </div>
-          <div class="alert alert-info mt-3 mb-0 p-2 small">Para cambios o cancelaciones, por favor contacta al administrador.</div>
+          <div class="alert alert-info mt-3 mb-0 p-2 small">
+            Recuerda: si no te presentas antes de las 16:00 del día de entrada, tu reserva se libera (no-show).
+          </div>
         </div>
       </div>
     </div>`).join('');
@@ -115,11 +132,13 @@ function renderMyBookings() {
 
 if (searchBar) {
   searchBar.addEventListener('results', (e) => {
+    autoReleaseNoShows();
     lastQuery = normalizeQuery(e.detail.q);
     renderResults(e.detail.results || searchAvailable(lastQuery));
   });
   const fd = new FormData(searchBar.querySelector('form'));
   lastQuery = normalizeQuery({ from: fd.get('from'), to: fd.get('to'), guests: fd.get('guests') });
+  autoReleaseNoShows();
   renderResults(searchAvailable(lastQuery));
 
   resModal?.addEventListener('booked', renderMyBookings);
@@ -139,7 +158,7 @@ const roomForm = $('#roomForm');
 let editingRoomId = null;
 
 function requireAdmin() {
-  if (!adminGuard || !adminContent) return false; // esta página no es admin
+  if (!adminGuard || !adminContent) return false;
   const s = currentUser();
   if (!s || s.role !== 'admin') {
     adminGuard.classList.remove('d-none');
@@ -151,7 +170,7 @@ function requireAdmin() {
   return true;
 }
 
-// KPIs simples
+// KPIs
 function renderAdminStats(){
   const st = db.read();
   const rooms = st.rooms?.length || 0;
@@ -162,7 +181,7 @@ function renderAdminStats(){
   $('#statGuests') && ($('#statGuests').textContent = guests);
 }
 
-// Tabla de habitaciones
+// Tabla habitaciones
 function renderRoomsTable(){
   if (!tblRooms) return;
   const rows = listRooms().map(r => `
@@ -179,71 +198,25 @@ function renderRoomsTable(){
   tblRooms.innerHTML = rows || '<tr><td colspan="5" class="text-center text-muted">Sin habitaciones</td></tr>';
 }
 
-// Manejo modal habitación
-function openRoomModal(room){
-  const isNew = !room;
-  $('#roomModalTitle').textContent = isNew ? 'Nueva habitación' : 'Editar habitación';
-  roomForm.name.value = room?.name || '';
-  roomForm.beds.value = room?.beds ?? 1;
-  roomForm.maxGuests.value = room?.maxGuests ?? 2;
-  roomForm.price.value = room?.price ?? 100000;
-  roomForm.amenities.value = (room?.services || room?.amenities || []).join(', ');
-  roomForm.imageUrl.value = (room?.photos?.[0]) || room?.img || 'https://picsum.photos/seed/new/1200/800';
-  new bootstrap.Modal(roomModalEl).show();
-}
-
-btnNewRoom && btnNewRoom.addEventListener('click', () => {
-  editingRoomId = null;
-  openRoomModal(null);
-});
-
-tblRooms && tblRooms.addEventListener('click', (ev)=>{
-  const id = ev.target?.dataset?.edit;
-  const del = ev.target?.dataset?.del;
-  if (id){
-    editingRoomId = id;
-    const r = getRoomById(id);
-    openRoomModal(r);
-  }
-  if (del){
-    confirmModal('Eliminar habitación','¿Seguro deseas eliminarla?').then(ok=>{
-      if(!ok) return;
-      try{ deleteRoom(del); toast('Habitación eliminada','warning'); renderRoomsTable(); renderAdminStats(); }
-      catch(e){ toast(e.message || 'Error','danger'); }
-    });
-  }
-});
-
-$('#btnSaveRoom') && $('#btnSaveRoom').addEventListener('click', ()=>{
-  const payload = {
-    name: roomForm.name.value.trim(),
-    beds: Number(roomForm.beds.value),
-    maxGuests: Number(roomForm.maxGuests.value),
-    price: Number(roomForm.price.value),
-    amenities: roomForm.amenities.value.split(',').map(s=>s.trim()).filter(Boolean),
-    photos: [ roomForm.imageUrl.value.trim() || 'https://picsum.photos/seed/new/1200/800' ],
-  };
-  try{
-    if (editingRoomId) updateRoom(editingRoomId, payload);
-    else createRoom(payload);
-    toast('Guardado','success');
-    bootstrap.Modal.getInstance(roomModalEl)?.hide();
-    renderRoomsTable();
-    renderAdminStats();
-  }catch(e){
-    toast(e.message || 'Error','danger');
-  }
-});
-
-// Tabla de reservas
+// Tabla reservas admin
 function renderBookingsAdmin(){
   if (!tblRes) return;
   const items = listAllBookings(); // con join (room, user)
   if (!items.length){
-    tblRes.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Sin reservas</td></tr>';
+    tblRes.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Sin reservas</td></tr>';
     return;
   }
-  tblRes.innerHTML = items.map(x => `
+  tblRes.innerHTML = items.map(x => {
+    const showCheckIn = x.status === 'CONFIRMED' && canCheckIn(x);
+    const showCancel = x.status === 'CONFIRMED'; // 👈 solo cancelar si está activa
+
+    const badgeClass = 
+      x.status === 'CHECKED_IN' ? 'text-bg-success' :
+      x.status === 'CONFIRMED' ? 'text-bg-secondary' :
+      x.status === 'NO_SHOW' ? 'text-bg-danger' :
+      x.status === 'CANCELLED' ? 'text-bg-primary' : 'text-bg-light';
+
+    return `
     <tr>
       <td>${x.room?.name ?? '-'}</td>
       <td>${x.user?.name ?? '-'}</td>
@@ -251,25 +224,60 @@ function renderBookingsAdmin(){
       <td>${x.to}</td>
       <td>$${Number(x.total||0).toLocaleString('es-CO')}</td>
       <td>${x.guests}</td>
+      <td><span class="badge ${badgeClass}">${x.status}</span></td>
       <td class="text-end">
-        <button class="btn btn-sm btn-outline-danger" data-cancel="${x.id}">Cancelar</button>
+        <div class="btn-group btn-group-sm" role="group">
+          ${showCheckIn ? `<button class="btn btn-outline-success" data-checkin="${x.id}">Check-in</button>` : ''}
+          ${showCancel ? `<button class="btn btn-outline-danger" data-cancel="${x.id}">Cancelar</button>` : ''}
+        </div>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
-// Cancelar reserva (delegación)
+
+/* ====== FORMULARIO CHECK-IN ====== */
+const checkinForm = document.getElementById('checkinForm');
+if (checkinForm) {
+  checkinForm.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const id = (document.getElementById('checkinId')?.value || '').trim();
+    if (!id) { toast('Ingresa el ID de la reserva','warning'); return; }
+    try{
+      checkInReservation(id, currentUser(), new Date());
+      toast('Check-in registrado','success');
+      renderBookingsAdmin();
+      renderAdminStats();
+      checkinForm.reset();
+    }catch(err){ toast(err.message || 'No se pudo registrar el check-in','danger'); }
+  });
+}
+
+/* ====== CHECK-IN + CANCELACIÓN (Delegación) ====== */
 document.addEventListener('click', async (e)=>{
-  const id = e.target?.dataset?.cancel;
-  if (!id) return;
+  // ✅ Check-in
+  const btnIn = e.target.closest('button[data-checkin]');
+  if (btnIn) {
+    e.preventDefault();
+    try{
+      await checkInReservation(btnIn.dataset.checkin, currentUser(), new Date());
+      toast('Check-in registrado','success');
+      renderBookingsAdmin(); renderAdminStats();
+    }catch(err){ toast(err.message || 'Error','danger'); }
+    return;
+  }
+
+  const btnCancel = e.target.closest('button[data-cancel]');
+  if (!btnCancel) return;
+  const id = btnCancel.dataset.cancel;
   const ok = await confirmModal('Cancelar reserva','¿Confirmas la cancelación?');
   if (!ok) return;
   try{
-    const removed = cancelBooking(id, currentUser()); // service valida admin
+    const removed = cancelBooking(id, currentUser());
     if (removed){
       toast('Reserva cancelada','warning');
       renderBookingsAdmin();
       renderAdminStats();
-      // si estás en página de búsqueda, refresca resultados
       if (lastQuery && resultsWrap) renderResults(searchAvailable(lastQuery));
     } else {
       toast('No se encontró la reserva','danger');
@@ -279,15 +287,14 @@ document.addEventListener('click', async (e)=>{
   }
 });
 
-// Tabs: cuando abren "Reservas"
+// Tabs Admin
 const tabResBtn = document.querySelector('button[data-bs-target="#tabRes"]');
 tabResBtn && tabResBtn.addEventListener('shown.bs.tab', renderBookingsAdmin);
 refreshAllBookings && refreshAllBookings.addEventListener('click', renderBookingsAdmin);
 
-// Boot admin (si aplica esta página)
+// Boot admin
 if (requireAdmin()){
   renderAdminStats();
   renderRoomsTable();
-  // Si la URL llega con hash #tabRes, carga reservas de una vez
   if (location.hash === '#tabRes') renderBookingsAdmin();
 }
