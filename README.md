@@ -2,9 +2,10 @@
 
 ![Hotel](https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1600&auto=format&fit=crop)
 
-# Enlace netlify: https://regal-frangollo-0f728a.netlify.app/
-Usario admin: admin@aurum.comContra: admin
-Usario cliente: maria@g.comContra: 123456
+Usario admin: admin@aurum.com
+Contra: admin
+Usario cliente: maria@g.com
+Contra: 123456
 
 ## 📖 Descripción General
 
