@@ -1,39 +1,37 @@
-// js/utils/date.js
-
-// Convierte a 'YYYY-MM-DD' (zona local, sin hora)
+// js/utils/date.js — versión final limpia
 export function toISO(input = new Date()){
   const d = new Date(input);
   d.setHours(0,0,0,0);
-  // slice(0,10) -> 'YYYY-MM-DD'
   return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
 }
 
-// Suma días a una fecha (acepta Date o string)
 export function addDays(input, days = 1){
   const d = new Date(input);
   d.setDate(d.getDate() + Number(days || 0));
   return d;
 }
 
-// Hoy en 'YYYY-MM-DD'
 export function today(){
   return toISO(new Date());
 }
 
-// Noches entre dos fechas (ceil por si cruza medianoche)
-export function nights(from, to){
-  const A = new Date(from);
-  const B = new Date(to);
-  const ms = B - A;
-  return ms > 0 ? Math.ceil(ms / 86400000) : 0;
+export function atMidnight(d) {
+  const x = new Date(d);
+  return new Date(x.getFullYear(), x.getMonth(), x.getDate());
 }
 
-// ¿Rangos se solapan? (A: from->to, B: from->to)
-export function overlaps(aFrom, aTo, bFrom, bTo){
-  const A = new Date(aFrom).getTime();
-  const B = new Date(aTo).getTime();
-  const C = new Date(bFrom).getTime();
-  const D = new Date(bTo).getTime();
-  // Intersección abierta: [A,B) con [C,D)
-  return A < D && C < B;
+export function nights(from, to) {
+  const A = atMidnight(from), B = atMidnight(to);
+  return Math.floor((B - A) / 86400000);
+}
+
+export function overlaps(aFrom, aTo, bFrom, bTo) {
+  const A1 = atMidnight(aFrom), A2 = atMidnight(aTo);
+  const B1 = atMidnight(bFrom), B2 = atMidnight(bTo);
+  return (A1 < B2) && (B1 < A2);
+}
+
+// Para gestionar horarios (check-in y no-show)
+export function combineDateTime(dateStr, timeStr = '00:00') {
+  return new Date(`${dateStr}T${timeStr}`);
 }
